@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&display=swap');
+
+.stApp {
+    background-color: #2D3561;
+}
+
+.stApp h1.pop {
+    color: #FC7215 !important;
+}
+
+h1, h1 span {
+    font-family: 'Spectral', ui-serif, Georgia, 'Times New Roman', serif !important;
+    letter-spacing: 0.01em;
+    font-weight: 600;
+}
+
+div[data-testid="InputInstructions"] > span:nth-child(1) {
+    visibility: hidden;
+}
+
+.stButton > button {
+    width: 100%;
+}
