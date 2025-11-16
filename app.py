@@ -77,6 +77,7 @@ elif st.session_state.mode == "gameplay":
         """,
         unsafe_allow_html=True
     )
+    st.write("<br/>", unsafe_allow_html=True)
 
     # parameters
     difficulty = st.session_state.difficulty
@@ -87,14 +88,15 @@ elif st.session_state.mode == "gameplay":
     
     if "audience" not in st.session_state:
         st.session_state.audience = random.choice(
-            ["8-year-old", "high schooler", "college student", "foreigner", "business colleague"]
+            ["5-year-old", "high schooler", "college professor", "beginner English learner", "friend", "love interest", "supervisor", "scientist", "investor", "grandma", "poet", "business colleague"]
         )
     
     concept = st.session_state.concept
     audience = st.session_state.audience
 
-    st.info("**Concept:** " + concept + "  \n"
-        + "**Audience:** " + audience)
+    st.info("Explain **" + concept + "** to " + "a **" + audience + "**.")
+    # st.info("**Concept:** " + concept + "  \n"
+    #     + "**Audience:** " + audience)
 
     # explanation
     explanation = st.text_area("Your explanation", key="explanation")
