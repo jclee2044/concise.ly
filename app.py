@@ -1,13 +1,23 @@
 import streamlit as st
 import random
+import base64
 from pathlib import Path
 import pandas as pd
 from prompts import EXPLANATION_SCORING_PROMPT
 from llm_client import generate_score
 
-# setup
+WORD_COUNTS = [15, 12, 10, 8, 6, 5, 4, 3, 2, 1]
+
+# load concepts
 concepts = pd.read_csv("concepts_db/concepts.csv")
 
+# load logo
+logo_path = Path(__file__).parent / "logo.png"
+LOGO_B64 = ""
+if logo_path.exists():
+    LOGO_B64 = base64.b64encode(logo_path.read_bytes()).decode("utf-8")
+
+# load css
 css_file = Path(__file__).parent / "style.css"
 if css_file.exists():
     st.markdown(
@@ -18,10 +28,19 @@ if css_file.exists():
 # initialize session state
 if "mode" not in st.session_state:
     st.session_state.mode = "home"
+if "round" not in st.session_state:
+    st.session_state.round = 0
 
 # ---------- HOME SCREEN ----------
 if st.session_state.mode == "home":
-    st.write("<h1 class='pop'>Concise.ly️</h1>", unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     
     tagline = random.choice([
         "Avoid the awkwardness. Communicate better.",
@@ -50,10 +69,10 @@ We will evaluate your response, give you points, and suggestions if you wish.
 elif st.session_state.mode == "gameplay":
     # header
     st.markdown(
-        """
+        f"""
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1 style="margin: 0" class="pop">Concise.ly️</h1>
-            <p><b>Time remaining:</b> 00:39</p>
+            <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
+            <p><b>Difficulty:</b> {st.session_state.difficulty}</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -81,7 +100,7 @@ elif st.session_state.mode == "gameplay":
     explanation = st.text_area("Your explanation", key="explanation")
 
     # word count info
-    word_limit = 15 # 15 -> 13 -> 11 -> 10 -> 9 -> 8 -> 7 -> 6 -> 5 -> 4 -> 3 -> 2
+    word_limit = WORD_COUNTS[st.session_state.round]
     current_word_count = len(explanation.split())
     words_left = word_limit - current_word_count
     st.markdown(
@@ -100,11 +119,15 @@ elif st.session_state.mode == "gameplay":
     )  
 
     # submit button
-    if st.button("Submit") and explanation.strip():
-        for key in ("concept", "audience", "explanation"):
-            st.session_state.pop(key, None)
-        st.session_state.explanation = ""
-        st.rerun()
+
+    col1, col2, col3 = st.columns([3,4,2])
+    with col3:
+        if st.button("Submit") and explanation.strip():
+            for key in ("concept", "audience", "explanation"):
+                st.session_state.pop(key, None)
+            st.session_state.explanation = ""
+            st.session_state.round += 1
+            st.rerun()
         # prompt = EXPLANATION_SCORING_PROMPT.format(
         #     concept=concept,
         #     audience=audience,
