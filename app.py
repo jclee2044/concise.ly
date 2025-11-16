@@ -62,16 +62,26 @@ elif st.session_state.mode == "gameplay":
     # parameters
     difficulty = st.session_state.difficulty
     concept_list = concepts[difficulty].tolist()
-    concept = random.choice(concept_list)
-    audience = random.choice(["8-year-old", "high schooler", "college student", "foreigner", "business colleague"])
-    word_limit = 15 # 15 -> 13 -> 11 -> 10 -> 9 -> 8 -> 7 -> 6 -> 5 -> 4 -> 3 -> 2
+    
+    if "concept" not in st.session_state:
+        st.session_state.concept = random.choice(concept_list)
+    
+    if "audience" not in st.session_state:
+        st.session_state.audience = random.choice(
+            ["8-year-old", "high schooler", "college student", "foreigner", "business colleague"]
+        )
+    
+    concept = st.session_state.concept
+    audience = st.session_state.audience
+
     st.info("**Concept:** " + concept + "  \n"
         + "**Audience:** " + audience)
 
     # explanation
-    explanation = st.text_area("Your explanation")
+    explanation = st.text_area("Your explanation", key="explanation")
 
     # word count info
+    word_limit = 15 # 15 -> 13 -> 11 -> 10 -> 9 -> 8 -> 7 -> 6 -> 5 -> 4 -> 3 -> 2
     current_word_count = len(explanation.split())
     words_left = word_limit - current_word_count
     st.markdown(
@@ -91,22 +101,26 @@ elif st.session_state.mode == "gameplay":
 
     # submit button
     if st.button("Submit") and explanation.strip():
-        prompt = EXPLANATION_SCORING_PROMPT.format(
-            concept=concept,
-            audience=audience,
-            explanation=explanation,
-            word_count=current_word_count,
-        )
-        result = generate_score(prompt)
-        print(prompt)
-        print(result)
+        for key in ("concept", "audience", "explanation"):
+            st.session_state.pop(key, None)
+        st.session_state.explanation = ""
+        st.rerun()
+        # prompt = EXPLANATION_SCORING_PROMPT.format(
+        #     concept=concept,
+        #     audience=audience,
+        #     explanation=explanation,
+        #     word_count=current_word_count,
+        # )
+        # result = generate_score(prompt)
+        # print(prompt)
+        # print(result)
 
-        st.subheader(f"Score: {result['score']}/100")
-        st.markdown("**Strengths:**")
-        for s in result["strengths"]:
-            st.write(f"- {s}")
-        st.markdown("**Weaknesses:**")
-        for w in result["weaknesses"]:
-            st.write(f"- {w}")
-        st.markdown("**Improved version:**")
-        st.write(result["improved_version"])
+        # st.subheader(f"Score: {result['score']}/100")
+        # st.markdown("**Strengths:**")
+        # for s in result["strengths"]:
+        #     st.write(f"- {s}")
+        # st.markdown("**Weaknesses:**")
+        # for w in result["weaknesses"]:
+        #     st.write(f"- {w}")
+        # st.markdown("**Improved version:**")
+        # st.write(result["improved_version"])
