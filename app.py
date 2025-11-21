@@ -43,9 +43,12 @@ if st.session_state.mode == "home":
     )
     
     tagline = random.choice([
-        "Avoid the awkwardness. Communicate better.",
-        "Say it right. No more tip-of-the-tongue.",
+        "Avoid the awkwardness.",
+        "Communicate better.",
+        "Say it right.",
+        "No more tip-of-the-tongue.",
         "Blow them away with how well you speak.",
+        "Make your words count."
     ])
     st.write("<h4>" + tagline + "</h4>", unsafe_allow_html=True)
 
@@ -125,27 +128,64 @@ elif st.session_state.mode == "gameplay":
     col1, col2, col3 = st.columns([3,4,2])
     with col3:
         if st.button("Submit") and explanation.strip():
-            for key in ("concept", "audience", "explanation"):
+            # Generate LLM feedback
+            prompt = EXPLANATION_SCORING_PROMPT.format(
+                concept=concept,
+                audience=audience,
+                explanation=explanation,
+                word_count=current_word_count,
+            )
+            try:
+                result = generate_score(prompt)
+                
+                # Parse the result: feedback (two sentences) followed by newline and improved version
+                # Try splitting by double newline first
+                if "\n\n" in result:
+                    parts = result.split("\n\n", 1)
+                    feedback = parts[0].strip()
+                    improved_version = parts[1].strip()
+                else:
+                    # Fallback: split by single newline and take first part as feedback, rest as improved
+                    lines = result.split("\n")
+                    # Find the first empty line as separator
+                    separator_idx = -1
+                    for i, line in enumerate(lines):
+                        if not line.strip():
+                            separator_idx = i
+                            break
+                    
+                    if separator_idx > 0:
+                        feedback = "\n".join(lines[:separator_idx]).strip()
+                        improved_version = "\n".join(lines[separator_idx+1:]).strip()
+                    else:
+                        # Last resort: take first two sentences as feedback, rest as improved
+                        sentences = result.split(". ")
+                        if len(sentences) >= 2:
+                            feedback = ". ".join(sentences[:2]) + ("." if not sentences[1].endswith(".") else "")
+                            improved_version = ". ".join(sentences[2:])
+                        else:
+                            feedback = result
+                            improved_version = result
+                
+                # Store in session state
+                st.session_state.llm_feedback = feedback
+                st.session_state.improved_version = improved_version
+                st.session_state.show_feedback = True
+            except Exception as e:
+                st.error(f"Error generating feedback: {str(e)}")
+            st.rerun()
+    
+    # Display feedback if available
+    if st.session_state.get("show_feedback", False):
+        st.subheader("Score: 100/100")
+        st.markdown("**Feedback:**")
+        st.write(st.session_state.llm_feedback)
+        st.markdown("**Improved version:**")
+        st.write(st.session_state.improved_version)
+        
+        if st.button("Next Round"):
+            for key in ("concept", "audience", "explanation", "llm_feedback", "improved_version", "show_feedback"):
                 st.session_state.pop(key, None)
             st.session_state.explanation = ""
             st.session_state.round += 1
             st.rerun()
-        # prompt = EXPLANATION_SCORING_PROMPT.format(
-        #     concept=concept,
-        #     audience=audience,
-        #     explanation=explanation,
-        #     word_count=current_word_count,
-        # )
-        # result = generate_score(prompt)
-        # print(prompt)
-        # print(result)
-
-        # st.subheader(f"Score: {result['score']}/100")
-        # st.markdown("**Strengths:**")
-        # for s in result["strengths"]:
-        #     st.write(f"- {s}")
-        # st.markdown("**Weaknesses:**")
-        # for w in result["weaknesses"]:
-        #     st.write(f"- {w}")
-        # st.markdown("**Improved version:**")
-        # st.write(result["improved_version"])

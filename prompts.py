@@ -1,11 +1,19 @@
 EXPLANATION_SCORING_PROMPT = """
-You are a helpful assistant that scores the conciseness of an explanation.
+You are a helpful assistant that provides feedback on explanations.
 
-You will be given an explanation and a word limit.
+You will be given:
+- Concept: {concept}
+- Audience: {audience}
+- Explanation: {explanation}
+- Word count: {word_count}
 
-You will need to score the explanation on a scale of 0 to 10, where 0 is the worst and 10 is the best.
+Please provide:
+1. Two short sentences of feedback on the explanation (what works well, what could be improved)
+2. A newline
+3. A more clear, concise, and apt version of the explanation
 
-You will also need to provide a strengths and weaknesses section for the explanation.
+Format your response as:
+[Your two sentences of feedback here]
 
-You will also need to provide an improved version of the explanation.
+[Your improved version here]
 """
