@@ -121,7 +121,10 @@ elif st.session_state.mode == "gameplay":
     explanation = st.text_area("Your explanation", key="explanation")
 
     # word count info
-    word_limit = WORD_COUNTS[st.session_state.round]
+    if st.session_state.round > len(WORD_COUNTS) - 1:
+        word_limit = WORD_COUNTS[len(WORD_COUNTS) - 1]
+    else:
+        word_limit = WORD_COUNTS[st.session_state.round]
     current_word_count = len(explanation.split())
     words_left = word_limit - current_word_count
     st.markdown(
