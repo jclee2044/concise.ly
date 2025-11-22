@@ -144,6 +144,7 @@ elif st.session_state.mode == "gameplay":
     col1, col2, col3 = st.columns([3,4,2])
     with col3:
         if st.button("Submit") and explanation.strip():
+            st.toast("Loading...")
             # Generate LLM feedback
             prompt = EXPLANATION_SCORING_PROMPT.format(
                 concept=concept,
