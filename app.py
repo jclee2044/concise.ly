@@ -31,6 +31,22 @@ if "mode" not in st.session_state:
 if "round" not in st.session_state:
     st.session_state.round = 0
 
+@st.dialog("Round Feedback", width="small", dismissible=False)
+def feedback_popup():
+    st.subheader("Score: 100/100")
+    st.markdown("**Feedback:**")
+    st.write(st.session_state.llm_feedback)
+    st.markdown("**Improved version:**")
+    st.write(st.session_state.improved_version)
+
+    if st.button("Next Round"):
+        for key in ("concept", "audience", "explanation", "llm_feedback", "improved_version", "show_feedback"):
+            st.session_state.pop(key, None)
+        st.session_state.explanation = ""
+        st.session_state.round += 1
+        st.rerun()
+
+
 # ---------- HOME SCREEN ----------
 if st.session_state.mode == "home":
     st.markdown(
@@ -175,17 +191,7 @@ elif st.session_state.mode == "gameplay":
                 st.error(f"Error generating feedback: {str(e)}")
             st.rerun()
     
-    # Display feedback if available
+    # Display feedback as popup
     if st.session_state.get("show_feedback", False):
-        st.subheader("Score: 100/100")
-        st.markdown("**Feedback:**")
-        st.write(st.session_state.llm_feedback)
-        st.markdown("**Improved version:**")
-        st.write(st.session_state.improved_version)
-        
-        if st.button("Next Round"):
-            for key in ("concept", "audience", "explanation", "llm_feedback", "improved_version", "show_feedback"):
-                st.session_state.pop(key, None)
-            st.session_state.explanation = ""
-            st.session_state.round += 1
-            st.rerun()
+        feedback_popup()
+
