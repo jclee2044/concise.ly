@@ -114,7 +114,7 @@ elif st.session_state.mode == "gameplay":
         """,
         unsafe_allow_html=True
     )
-    st.write("<br/>", unsafe_allow_html=True)
+    st.space("small")
 
     # parameters
     difficulty = st.session_state.difficulty
