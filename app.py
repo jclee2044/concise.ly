@@ -41,6 +41,27 @@ if "round" not in st.session_state:
     st.session_state.round = 0
 st.session_state.setdefault("include_audience", True)
 
+# --- logo home/reset via query param ---
+page = (
+    st.query_params.get("page")
+    if hasattr(st, "query_params")
+    else st.experimental_get_query_params().get("page", [None])[0]
+)
+
+if page == "home":
+    st.session_state.clear()
+    st.session_state.mode = "home"
+    st.session_state.round = 0
+    st.session_state.setdefault("include_audience", True)
+
+    if hasattr(st, "query_params"):
+        st.query_params.clear()
+    else:
+        st.experimental_set_query_params()
+
+    st.rerun()
+
+
 
 @st.dialog("Round Feedback", width="small", dismissible=False)
 def feedback_popup():
@@ -82,7 +103,7 @@ if st.session_state.mode == "home":
     st.write("""
 **Instructions:** You will be given a concept, an audience, and a word limit. Within these parameters, you must explain or define the concept to match the context. 
              
-We will evaluate your response, give you points, and suggestions if you wish.
+We will evaluate your response and give you suggestions.
 """)
     
     difficulty = st.radio("Choose difficulty", ["easy", "medium", "hard"], horizontal=True)
@@ -108,7 +129,9 @@ elif st.session_state.mode == "gameplay":
     st.markdown(
         f"""
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
+            <a href="?page=home" target="_self" style="text-decoration:none;">
+                <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
+            </a>
             <p><b>Difficulty:</b> {st.session_state.difficulty}</p>
         </div>
         """,
