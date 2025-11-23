@@ -8,6 +8,15 @@ from llm_client import generate_score
 
 WORD_COUNTS = [15, 12, 10, 8, 6, 5, 4, 3, 2, 1]
 
+AUDIENCE_LISTS = {
+    "easy": ["5-year-old", "beginner English learner", "friend", "grandma"],
+    "medium": ["5-year-old", "high schooler", "college professor", "beginner English learner",
+               "friend", "supervisor", "grandma", "business colleague"],
+    "hard": ["5-year-old", "high schooler", "college professor", "beginner English learner", 
+             "friend", "love interest", "supervisor", "scientist", "investor", "grandma", "poet",
+             "business colleague", "colleague"]
+}
+
 # load concepts
 concepts = pd.read_csv("concepts_db/concepts.csv")
 
@@ -106,9 +115,7 @@ elif st.session_state.mode == "gameplay":
         st.session_state.concept = random.choice(concept_list)
     
     if "audience" not in st.session_state:
-        st.session_state.audience = random.choice(
-            ["5-year-old", "high schooler", "college professor", "beginner English learner", "friend", "love interest", "supervisor", "scientist", "investor", "grandma", "poet", "business colleague"]
-        )
+        st.session_state.audience = random.choice(AUDIENCE_LISTS[difficulty])
     
     concept = st.session_state.concept
     audience = st.session_state.audience
