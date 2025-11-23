@@ -39,6 +39,8 @@ if "mode" not in st.session_state:
     st.session_state.mode = "home"
 if "round" not in st.session_state:
     st.session_state.round = 0
+st.session_state.setdefault("include_audience", True)
+
 
 @st.dialog("Round Feedback", width="small", dismissible=False)
 def feedback_popup():
@@ -83,8 +85,15 @@ if st.session_state.mode == "home":
 We will evaluate your response, give you points, and suggestions if you wish.
 """)
     
-    difficulty = st.selectbox("Choose difficulty", ["easy", "medium", "hard"])
+    difficulty = st.radio("Choose difficulty", ["easy", "medium", "hard"], horizontal=True)
     st.session_state.difficulty = difficulty
+
+    include_audience = st.toggle(
+        "Include audience",
+        value=st.session_state.include_audience,
+        key="include_audience_toggle"
+    )
+    st.session_state.include_audience = include_audience
     
     col1, col2, col3 = st.columns([3,3,2])
     with col3:
@@ -114,13 +123,22 @@ elif st.session_state.mode == "gameplay":
     if "concept" not in st.session_state:
         st.session_state.concept = random.choice(concept_list)
     
+    # always (re)create an audience for the round
     if "audience" not in st.session_state:
-        st.session_state.audience = random.choice(AUDIENCE_LISTS[difficulty])
+        if st.session_state.include_audience:
+            st.session_state.audience = random.choice(AUDIENCE_LISTS[difficulty])
+        else:
+            st.session_state.audience = "General audience"
+
+    # always define local variable
+    audience = st.session_state.audience
     
     concept = st.session_state.concept
-    audience = st.session_state.audience
 
-    st.info("Explain **" + concept + "** to " + "a **" + audience + "**.")
+    if st.session_state.include_audience:
+        st.info("Explain **" + concept + "** to " + "a **" + audience + "**.")
+    else:
+        st.info("Explain **" + concept + "**.")
 
     # explanation
     explanation = st.text_area("Your explanation", key="explanation")
@@ -152,56 +170,59 @@ elif st.session_state.mode == "gameplay":
     col1, col2, col3 = st.columns([3,4,2])
     with col3:
         if st.button("Submit") and explanation.strip():
-            st.toast("Loading...")
-            # Generate LLM feedback
-            prompt = EXPLANATION_SCORING_PROMPT.format(
-                concept=concept,
-                audience=audience,
-                explanation=explanation,
-                word_count=current_word_count,
-                word_limit=word_limit,
-            )
-            try:
-                result = generate_score(prompt)
+            with st.status("Scoring your explanation...", expanded=False) as s:
                 
-                # Parse the result: feedback (two sentences) followed by newline and improved version
-                # Try splitting by double newline first
-                if "\n\n" in result:
-                    parts = result.split("\n\n", 1)
-                    feedback = parts[0].strip()
-                    improved_version = parts[1].strip()
-                else:
-                    # Fallback: split by single newline and take first part as feedback, rest as improved
-                    lines = result.split("\n")
-                    # Find the first empty line as separator
-                    separator_idx = -1
-                    for i, line in enumerate(lines):
-                        if not line.strip():
-                            separator_idx = i
-                            break
+                # Generate LLM feedback
+                prompt = EXPLANATION_SCORING_PROMPT.format(
+                    concept=concept,
+                    audience=audience,
+                    explanation=explanation,
+                    word_count=current_word_count,
+                    word_limit=word_limit,
+                )
+                try:
+                    result = generate_score(prompt)
                     
-                    if separator_idx > 0:
-                        feedback = "\n".join(lines[:separator_idx]).strip()
-                        improved_version = "\n".join(lines[separator_idx+1:]).strip()
+                    # Parse the result: feedback (two sentences) followed by newline and improved version
+                    # Try splitting by double newline first
+                    if "\n\n" in result:
+                        parts = result.split("\n\n", 1)
+                        feedback = parts[0].strip()
+                        improved_version = parts[1].strip()
                     else:
-                        # Last resort: take first two sentences as feedback, rest as improved
-                        sentences = result.split(". ")
-                        if len(sentences) >= 2:
-                            feedback = ". ".join(sentences[:2]) + ("." if not sentences[1].endswith(".") else "")
-                            improved_version = ". ".join(sentences[2:])
+                        # Fallback: split by single newline and take first part as feedback, rest as improved
+                        lines = result.split("\n")
+                        # Find the first empty line as separator
+                        separator_idx = -1
+                        for i, line in enumerate(lines):
+                            if not line.strip():
+                                separator_idx = i
+                                break
+                        
+                        if separator_idx > 0:
+                            feedback = "\n".join(lines[:separator_idx]).strip()
+                            improved_version = "\n".join(lines[separator_idx+1:]).strip()
                         else:
-                            feedback = result
-                            improved_version = result
-                
-                # Store in session state
-                st.session_state.llm_feedback = feedback
-                st.session_state.improved_version = improved_version
-                st.session_state.show_feedback = True
-            except Exception as e:
-                st.error(f"Error generating feedback: {str(e)}")
-            st.rerun()
-    
-    # Display feedback as popup
-    if st.session_state.get("show_feedback", False):
-        feedback_popup()
+                            # Last resort: take first two sentences as feedback, rest as improved
+                            sentences = result.split(". ")
+                            if len(sentences) >= 2:
+                                feedback = ". ".join(sentences[:2]) + ("." if not sentences[1].endswith(".") else "")
+                                improved_version = ". ".join(sentences[2:])
+                            else:
+                                feedback = result
+                                improved_version = result
+                    
+                    # Store in session state
+                    st.session_state.llm_feedback = feedback
+                    st.session_state.improved_version = improved_version
+                    st.session_state.show_feedback = True
+
+                    s.update(label="Done!", state="complete")
+                except Exception as e:
+                    st.error(f"Error generating feedback: {str(e)}")
+                st.rerun()
+        
+        # Display feedback as popup
+        if st.session_state.get("show_feedback", False):
+            feedback_popup()
 
