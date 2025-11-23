@@ -11,7 +11,7 @@ You are given the following information:
 First check if the user's explanation is within the word limit.
 
 Then provide:
-1. Two short sentences of feedback on the user's explanation (what works well, what could be improved)
+1. Two extremely short sentences of feedback on the user's explanation (what works well, what could be improved)
 2. A newline
 3. A more clear, concise, and apt version of the explanation
 

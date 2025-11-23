@@ -6,7 +6,7 @@ import pandas as pd
 from prompts import EXPLANATION_SCORING_PROMPT
 from llm_client import generate_score
 
-WORD_COUNTS = [20, 18, 16, 14, 12, 10, 8, 6, 5, 4, 3]
+WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
 
 AUDIENCE_LISTS = {
     "easy": ["5-year-old", "beginner English learner", "friend", "grandma"],
@@ -14,7 +14,7 @@ AUDIENCE_LISTS = {
                "friend", "supervisor", "grandma", "business colleague"],
     "hard": ["5-year-old", "high schooler", "college professor", "beginner English learner", 
              "friend", "love interest", "supervisor", "scientist", "investor", "grandma", "poet",
-             "business colleague", "colleague"]
+             "business colleague"]
 }
 
 # load concepts
@@ -159,9 +159,9 @@ elif st.session_state.mode == "gameplay":
     concept = st.session_state.concept
 
     if st.session_state.include_audience:
-        st.info("Explain **" + concept + "** to " + "a **" + audience + "**.")
+        st.info("Explain what **" + concept + "** is to " + "a **" + audience + "**.")
     else:
-        st.info("Explain **" + concept + "**.")
+        st.info("Explain what **" + concept + "** is.")
 
     # explanation
     explanation = st.text_area("Your explanation", key="explanation")
