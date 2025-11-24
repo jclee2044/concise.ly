@@ -6,7 +6,8 @@ import pandas as pd
 from prompts import EXPLANATION_SCORING_PROMPT
 from llm_client import generate_score
 
-WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
+# WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
+WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3]
 
 AUDIENCE_LISTS = {
     "easy": ["5-year-old", "beginner English learner", "friend", "grandma"],
@@ -91,12 +92,8 @@ if st.session_state.mode == "home":
     )
     
     tagline = random.choice([
-        "Avoid the awkwardness.",
-        "Communicate better.",
-        "Say it right.",
-        "No more tip-of-the-tongue.",
-        "Blow them away with how well you speak.",
-        "Make your words count."
+        "Avoid the awkwardness.", "Communicate better.", "Say it right.", "No more tip-of-the-tongue.",
+         "Blow them away with how well you speak.", "Make your words count.", "No more confusion."
     ])
     st.write("<h4>" + tagline + "</h4>", unsafe_allow_html=True)
 
@@ -132,7 +129,10 @@ elif st.session_state.mode == "gameplay":
             <a href="?page=home" target="_self" style="text-decoration:none;">
                 <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
             </a>
-            <p><b>Difficulty:</b> {st.session_state.difficulty}</p>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
+                <p style="margin: 0;"><b>Difficulty:</b> {st.session_state.difficulty}</p>
+                <p style="margin: 0;"><b>Round:</b> {st.session_state.round + 1}/{len(WORD_COUNTS)}</p>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
