@@ -194,7 +194,15 @@ elif st.session_state.mode == "gameplay":
 
     col1, col2, col3 = st.columns([3,4,2])
     with col3:
-        if st.button("Submit") and explanation.strip():
+        if st.button("Submit"):
+            if not explanation.strip():
+                st.error("Please enter an explanation.")
+                st.stop()
+
+            if current_word_count > word_limit:
+                st.error("You exceeded the word limit. Please try again.")
+                st.stop()
+
             with st.status("Scoring your explanation...", expanded=False) as s:
                 current_points = 100
                 # Generate LLM feedback
