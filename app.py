@@ -7,7 +7,8 @@ from prompts import EXPLANATION_SCORING_PROMPT
 from llm_client import generate_score
 
 # WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
-WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3]
+# WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3] # 15 rounds
+WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 4, 3] # 10 rounds
 
 AUDIENCE_LISTS = {
     "easy": ["5-year-old", "beginner English learner", "friend", "grandma"],
@@ -175,6 +176,12 @@ elif st.session_state.mode == "gameplay":
         word_limit = WORD_COUNTS[st.session_state.round]
     current_word_count = len(explanation.split())
     words_left = word_limit - current_word_count
+    if words_left <= 0:
+        wl_color = "#E74C3C" # red
+    elif words_left <= max(2, min(word_limit - 1, int(round(word_limit * 0.3)) + 1)):
+        wl_color = "#FFB627" # yellow
+    else:
+        wl_color = "white"
     st.markdown(
         f"""
         <div style="text-align: right; line-height: 1.1;">
@@ -182,7 +189,7 @@ elif st.session_state.mode == "gameplay":
                 Current word count: {current_word_count}
             </p>
             <p style="margin: 0; font-weight: 700;">
-                Words left: {words_left}
+                <span style="color: {wl_color};">Words left: {words_left}</span>
             </p>
             <br/>
         </div>
