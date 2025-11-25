@@ -129,8 +129,8 @@ elif st.session_state.mode == "gameplay":
             <a href="?page=home" target="_self" style="text-decoration:none;">
                 <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
             </a>
-            <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
-                <p style="margin: 0;"><b>Difficulty:</b> {st.session_state.difficulty}</p>
+            <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
+                <p style="margin: 0;"><b>Difficulty:</b> {st.session_state.difficulty.title()}</p>
                 <p style="margin: 0;"><b>Round:</b> {st.session_state.round + 1}/{len(WORD_COUNTS)}</p>
             </div>
         </div>
