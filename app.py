@@ -41,6 +41,7 @@ if "mode" not in st.session_state:
 if "round" not in st.session_state:
     st.session_state.round = 0
 st.session_state.setdefault("include_audience", True)
+st.session_state.setdefault("total_points", 0)
 
 # --- logo home/reset via query param ---
 page = (
@@ -132,6 +133,7 @@ elif st.session_state.mode == "gameplay":
             <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
                 <p style="margin: 0;"><b>Difficulty:</b> {st.session_state.difficulty.title()}</p>
                 <p style="margin: 0;"><b>Round:</b> {st.session_state.round + 1}/{len(WORD_COUNTS)}</p>
+                <p style="margin: 0;"><b>Total points:</b> {st.session_state.total_points}</p>
             </div>
         </div>
         """,
@@ -194,7 +196,7 @@ elif st.session_state.mode == "gameplay":
     with col3:
         if st.button("Submit") and explanation.strip():
             with st.status("Scoring your explanation...", expanded=False) as s:
-                
+                current_points = 100
                 # Generate LLM feedback
                 prompt = EXPLANATION_SCORING_PROMPT.format(
                     concept=concept,
@@ -239,6 +241,7 @@ elif st.session_state.mode == "gameplay":
                     st.session_state.llm_feedback = feedback
                     st.session_state.improved_version = improved_version
                     st.session_state.show_feedback = True
+                    st.session_state.total_points += current_points
 
                     s.update(label="Done!", state="complete")
                 except Exception as e:
@@ -248,4 +251,3 @@ elif st.session_state.mode == "gameplay":
         # Display feedback as popup
         if st.session_state.get("show_feedback", False):
             feedback_popup()
-
