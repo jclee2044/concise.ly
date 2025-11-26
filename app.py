@@ -51,6 +51,7 @@ st.session_state.setdefault("round_start_time", None)
 st.session_state.setdefault("start_time", None)
 st.session_state.setdefault("round_durations", [])  # list of seconds per round - for overall tracking
 st.session_state.setdefault("last_round_time", None)
+st.session_state.setdefault("word_limit_penalty", 0)
 
 # --- logo home/reset via query param ---
 page = (
@@ -112,7 +113,7 @@ def feedback_popup():
             "concept", "audience", "explanation", "improved_version", 
             "show_feedback", "final_score", "content_score", "time_bonus", "elapsed_seconds",
             "brevity_score", "accuracy_score", "audience_fit_score", "grammar_score",
-            "feedback_dict", "last_round_time"
+            "feedback_dict", "last_round_time", "word_limit_penalty"
         )
         for key in keys_to_clear:
             st.session_state.pop(key, None)
@@ -254,6 +255,7 @@ elif st.session_state.mode == "gameplay":
 
             if current_word_count > word_limit:
                 st.error("You exceeded the word limit. Please try again.")
+                st.session_state.word_limit_penalty += 10
                 st.stop()
             
             # Calculate elapsed time
@@ -305,16 +307,20 @@ elif st.session_state.mode == "gameplay":
                         grammar_score,
                         include_audience=st.session_state.include_audience
                     )
-                    
-                    # Compute final score with time bonus
-                    final_score = compute_final_score(content_score, elapsed_seconds)
-                    
+
+                    # Word limit penalty for THIS round
+                    penalty = st.session_state.get("word_limit_penalty", 0)
+
+                    # Compute final score with time bonus and penalty
+                    final_score = compute_final_score(content_score, elapsed_seconds, penalty=penalty)
+
                     # If accuracy is 0, final score should be 0
                     if accuracy_score == 0:
                         final_score = 0.0
-                    
-                    # Compute time bonus
+
+                    # Compute time bonus (for display)
                     bonus = time_bonus(elapsed_seconds)
+
                     
                     # Round all scores to one decimal place
                     content_score = round(content_score, 1)

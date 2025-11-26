@@ -56,18 +56,19 @@ def time_bonus(elapsed_seconds):
             return -(elapsed_seconds - 60) / 6.0
 
 
-def compute_final_score(content_score, elapsed_seconds):
+def compute_final_score(content_score, elapsed_seconds, penalty=0.0):
     """
-    Compute final score by adding time bonus to content score and clamping to 0-100.
+    Compute final score by adding time bonus to content score,
+    subtracting penalties, and clamping to 0-100.
     
     Args:
         content_score: Content score (0-100)
         elapsed_seconds: Time elapsed in seconds
+        penalty: Total penalty to subtract (e.g., word limit penalty)
     
     Returns:
         Final score
     """
     bonus = time_bonus(elapsed_seconds)
-    final = content_score + bonus
-    return final
-
+    final = content_score + bonus - penalty
+    return max(0.0, min(100.0, final))
