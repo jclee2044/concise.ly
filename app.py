@@ -4,8 +4,11 @@ import base64
 from pathlib import Path
 import pandas as pd
 import time
+import json
+from datetime import datetime
 from prompts import EXPLANATION_SCORING_PROMPT
 from llm_client import generate_score
+from scoring import compute_content_score, time_bonus, compute_final_score
 
 # WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
 # WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3] # 15 rounds
@@ -45,6 +48,7 @@ if "round" not in st.session_state:
 st.session_state.setdefault("include_audience", True)
 st.session_state.setdefault("total_points", 0)
 st.session_state.setdefault("round_start_time", None)
+st.session_state.setdefault("start_time", None)
 st.session_state.setdefault("round_durations", [])  # list of seconds per round - for overall tracking
 st.session_state.setdefault("last_round_time", None)
 
@@ -72,20 +76,51 @@ if page == "home":
 
 @st.dialog("Round Feedback", width="small", dismissible=False)
 def feedback_popup():
-    st.subheader("Score: 100/100")
-    # todo delete after testing
-    if st.session_state.get("last_round_time", None) is not None:
-        st.markdown(f"**Time this round:** {st.session_state.last_round_time:.1f} seconds")
-    st.markdown("**Feedback:**")
-    st.write(st.session_state.llm_feedback)
+    final_score = st.session_state.get("final_score", 0)
+    st.subheader(f"Final Score: {final_score:.1f}/100")
+    
+    content_score = st.session_state.get("content_score", 0)
+    time_bonus_val = st.session_state.get("time_bonus", 0)
+    elapsed_seconds = st.session_state.get("elapsed_seconds", 0)
+    
+    st.markdown(f"**Content Score:** {content_score:.1f}/100")
+    st.markdown(f"**Time Bonus:** {time_bonus_val:+.1f} points ({elapsed_seconds:.1f}s)")
+    
+    st.markdown("**Overall Feedback:**")
+    feedback_dict = st.session_state.get("feedback_dict", {})
+    st.write(feedback_dict.get('overall', 'N/A'))
+    
     st.markdown("**Improved version:**")
-    st.write(st.session_state.improved_version)
+    st.write(st.session_state.get("improved_version", ""))
+    
+    # Score breakdown as expandable section
+    with st.expander("Score Breakdown"):
+        brevity_score = st.session_state.get("brevity_score", 0)
+        accuracy_score = st.session_state.get("accuracy_score", 0)
+        audience_fit_score = st.session_state.get("audience_fit_score", 0)
+        grammar_score = st.session_state.get("grammar_score", 0)
+        
+        st.markdown(f"- **Brevity:** {brevity_score}/10 - {feedback_dict.get('brevity', 'N/A')}")
+        st.markdown(f"- **Accuracy:** {accuracy_score}/10 - {feedback_dict.get('accuracy', 'N/A')}")
+        label = "Audience Fit" if st.session_state.get("include_audience", True) else "Clarity"
+        st.markdown(f"- **{label}:** {audience_fit_score}/10 - {feedback_dict.get('audience_fit', 'N/A')}")
+        st.markdown(f"- **Grammar:** {grammar_score}/10 - {feedback_dict.get('grammar', 'N/A')}")
 
     if st.button("Next Round"):
-        for key in ("concept", "audience", "explanation", "llm_feedback", "improved_version", "show_feedback", "last_round_time"):
+        # Clear all scoring-related keys
+        keys_to_clear = (
+            "concept", "audience", "explanation", "improved_version", 
+            "show_feedback", "final_score", "content_score", "time_bonus", "elapsed_seconds",
+            "brevity_score", "accuracy_score", "audience_fit_score", "grammar_score",
+            "feedback_dict", "last_round_time"
+        )
+        for key in keys_to_clear:
             st.session_state.pop(key, None)
         st.session_state.explanation = ""
         st.session_state.round += 1
+        # Reset start_time for the new round
+        st.session_state.start_time = None
+        st.session_state.round_start_time = None
         st.rerun()
 
 
@@ -166,6 +201,7 @@ elif st.session_state.mode == "gameplay":
     # Start timer for this round if not already started and no feedback is being shown
     if st.session_state.round_start_time is None and not st.session_state.get("show_feedback", False):
         st.session_state.round_start_time = time.time()
+        st.session_state.start_time = datetime.now()
 
     # always define local variable
     audience = st.session_state.audience
@@ -220,19 +256,16 @@ elif st.session_state.mode == "gameplay":
                 st.error("You exceeded the word limit. Please try again.")
                 st.stop()
             
-            elapsed = None
-            if st.session_state.round_start_time is not None:
-                elapsed = time.time() - st.session_state.round_start_time
-                st.session_state.round_durations.append(elapsed)
+            # Calculate elapsed time
+            elapsed_seconds = 0
+            if st.session_state.start_time is not None:
+                elapsed_seconds = (datetime.now() - st.session_state.start_time).total_seconds()
+                st.session_state.round_durations.append(elapsed_seconds)
                 # reset so next round can set a new start time
                 st.session_state.round_start_time = None
-
-            # todo delete after testing
-            if elapsed is not None:
-                st.session_state.last_round_time = elapsed
+                st.session_state.start_time = None
 
             with st.status("Scoring your explanation...", expanded=False) as s:
-                current_points = 100
                 # Generate LLM feedback
                 prompt = EXPLANATION_SCORING_PROMPT.format(
                     concept=concept,
@@ -244,42 +277,71 @@ elif st.session_state.mode == "gameplay":
                 try:
                     result = generate_score(prompt)
                     
-                    # Parse the result: feedback (two sentences) followed by newline and improved version
-                    # Try splitting by double newline first
-                    if "\n\n" in result:
-                        parts = result.split("\n\n", 1)
-                        feedback = parts[0].strip()
-                        improved_version = parts[1].strip()
-                    else:
-                        # Fallback: split by single newline and take first part as feedback, rest as improved
-                        lines = result.split("\n")
-                        # Find the first empty line as separator
-                        separator_idx = -1
-                        for i, line in enumerate(lines):
-                            if not line.strip():
-                                separator_idx = i
-                                break
-                        
-                        if separator_idx > 0:
-                            feedback = "\n".join(lines[:separator_idx]).strip()
-                            improved_version = "\n".join(lines[separator_idx+1:]).strip()
-                        else:
-                            # Last resort: take first two sentences as feedback, rest as improved
-                            sentences = result.split(". ")
-                            if len(sentences) >= 2:
-                                feedback = ". ".join(sentences[:2]) + ("." if not sentences[1].endswith(".") else "")
-                                improved_version = ". ".join(sentences[2:])
-                            else:
-                                feedback = result
-                                improved_version = result
+                    # Parse JSON response
+                    # Try to extract JSON if it's wrapped in markdown code blocks
+                    result_clean = result.strip()
+                    if result_clean.startswith("```"):
+                        # Remove markdown code block markers
+                        lines = result_clean.split("\n")
+                        result_clean = "\n".join(lines[1:-1]) if len(lines) > 2 else result_clean
+                    elif result_clean.startswith("```json"):
+                        lines = result_clean.split("\n")
+                        result_clean = "\n".join(lines[1:-1]) if len(lines) > 2 else result_clean
+                    
+                    # Parse JSON
+                    score_data = json.loads(result_clean)
+                    
+                    # Extract and clamp subscores to [0, 10]
+                    brevity_score = max(0, min(10, int(score_data.get("brevity_score", 0))))
+                    accuracy_score = max(0, min(10, int(score_data.get("accuracy_score", 0))))
+                    audience_fit_score = max(0, min(10, int(score_data.get("audience_fit_score", 0))))
+                    grammar_score = max(0, min(10, int(score_data.get("grammar_score", 0))))
+                    
+                    # Compute content score
+                    content_score = compute_content_score(
+                        brevity_score,
+                        accuracy_score,
+                        audience_fit_score,
+                        grammar_score,
+                        include_audience=st.session_state.include_audience
+                    )
+                    
+                    # Compute final score with time bonus
+                    final_score = compute_final_score(content_score, elapsed_seconds)
+                    
+                    # If accuracy is 0, final score should be 0
+                    if accuracy_score == 0:
+                        final_score = 0.0
+                    
+                    # Compute time bonus
+                    bonus = time_bonus(elapsed_seconds)
+                    
+                    # Round all scores to one decimal place
+                    content_score = round(content_score, 1)
+                    final_score = round(final_score, 1)
+                    bonus = round(bonus, 1)
+                    elapsed_seconds = round(elapsed_seconds, 1)
+                    
+                    # Store feedback dict for display
+                    feedback_dict = score_data.get("feedback", {})
                     
                     # Store in session state
-                    st.session_state.llm_feedback = feedback
-                    st.session_state.improved_version = improved_version
+                    st.session_state.final_score = final_score
+                    st.session_state.content_score = content_score
+                    st.session_state.time_bonus = bonus
+                    st.session_state.elapsed_seconds = elapsed_seconds
+                    st.session_state.brevity_score = brevity_score
+                    st.session_state.accuracy_score = accuracy_score
+                    st.session_state.audience_fit_score = audience_fit_score
+                    st.session_state.grammar_score = grammar_score
+                    st.session_state.feedback_dict = feedback_dict
+                    st.session_state.improved_version = score_data.get("improved_version", "")
                     st.session_state.show_feedback = True
-                    st.session_state.total_points += current_points
+                    st.session_state.total_points += final_score
 
                     s.update(label="Done!", state="complete")
+                except json.JSONDecodeError as e:
+                    st.error(f"Error parsing JSON response: {str(e)}\n\nResponse was: {result[:500]}")
                 except Exception as e:
                     st.error(f"Error generating feedback: {str(e)}")
                 st.rerun()

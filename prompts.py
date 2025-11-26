@@ -8,24 +8,38 @@ You are given the following information:
 - User's word count: {word_count}
 - Word limit: {word_limit}
 
-First check if the user's explanation is within the word limit.
+Evaluate the user's explanation and provide your response as valid JSON only, with no additional text before or after.
 
-Then provide:
-1. Two extremely short sentences of feedback on the user's explanation (what works well, what could be improved)
-2. A newline
-3. A more clear, concise, and apt version of the explanation
+The JSON must have the following structure:
+{{
+  "brevity_score": <integer 0-10>,
+  "accuracy_score": <integer 0-10>,
+  "audience_fit_score": <integer 0-10>,
+  "grammar_score": <integer 0-10>,
+  "feedback": {{
+    "brevity": "<short sentence about brevity>",
+    "accuracy": "<short sentence about accuracy>",
+    "audience_fit": "<short sentence about audience fit>",
+    "grammar": "<short sentence about grammar>",
+    "overall": "<two extremely short sentences of overall feedback>"
+  }},
+  "improved_version": "<a more clear, concise, and apt version of the explanation>"
+}}
 
-Note:
+Scoring guidelines:
+- brevity_score: How well the explanation fits within the word limit (0-10)
+- accuracy_score: How accurate and correct the explanation is (0-10)
+- audience_fit_score: How appropriate the explanation is for the given audience (0-10)
+- grammar_score: How grammatically correct and clear the explanation is (0-10)
+
+Important constraints for improved_version:
 - You cannot use the concept itself in the explanation.
 - Your explanation must be within the word limit.
 - Your explanation must be appropriate for the audience.
 
 If the user's explanation contains uncertainty, profanity, or expression of not knowing how to explain the concept:
-The feedback should be one sentence, something like "To explain this concept, you could say" followed by your suggestions.
+The feedback.overall should be one sentence, something like "To explain this concept, you could say" followed by your suggestions.
 If the user's explanation is longer than the word limit, focus on how specifically to make it shorter and more accurate.
 
-Format your response as:
-[Your feedback here]
-
-[Your improved version here]
+Return ONLY valid JSON, no markdown formatting, no code blocks, just the raw JSON object.
 """
