@@ -59,7 +59,7 @@ def time_bonus(elapsed_seconds):
 def compute_final_score(content_score, elapsed_seconds, penalty=0.0):
     """
     Compute final score by adding time bonus to content score,
-    subtracting penalties, and clamping to 0-100.
+    subtracting penalties.
     
     Args:
         content_score: Content score (0-100)
@@ -71,4 +71,4 @@ def compute_final_score(content_score, elapsed_seconds, penalty=0.0):
     """
     bonus = time_bonus(elapsed_seconds)
     final = content_score + bonus - penalty
-    return max(0.0, min(100.0, final))
+    return max(0.0, final)

@@ -15,7 +15,7 @@ from scoring import compute_content_score, time_bonus, compute_final_score
 WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 4, 3] # 10 rounds
 
 AUDIENCE_LISTS = {
-    "easy": ["5-year-old", "beginner English learner", "friend", "grandma"],
+    "easy": ["5-year-old", "beginner English learner", "friend", "grandma", "general audience"],
     "medium": ["5-year-old", "high schooler", "college professor", "beginner English learner",
                "friend", "supervisor", "grandma", "business colleague"],
     "hard": ["5-year-old", "high schooler", "college professor", "beginner English learner", 
@@ -93,7 +93,10 @@ def feedback_popup():
     elapsed_seconds = st.session_state.get("elapsed_seconds", 0)
     
     st.markdown(f"**Content Score:** {content_score:.1f}/100")
-    st.markdown(f"**Time Bonus:** {time_bonus_val:+.1f} points ({elapsed_seconds:.1f}s)")
+    if time_bonus_val > 0:
+        st.markdown(f"**Time Bonus:** {time_bonus_val:+.1f} points ({elapsed_seconds:.1f}s)")
+    else:
+        st.markdown(f"**Time Penalty:** {time_bonus_val:.1f} points ({elapsed_seconds:.1f}s)")
     
     st.markdown("**Overall Feedback:**")
     feedback_dict = st.session_state.get("feedback_dict", {})
@@ -185,7 +188,7 @@ elif st.session_state.mode == "gameplay":
             <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2;">
                 <p style="margin: 0;"><b>Difficulty:</b> {st.session_state.difficulty.title()}</p>
                 <p style="margin: 0;"><b>Round:</b> {st.session_state.round + 1}/{len(WORD_COUNTS)}</p>
-                <p style="margin: 0;"><b>Total points:</b> {st.session_state.total_points}</p>
+                <p style="margin: 0;"><b>Total points:</b> {st.session_state.total_points:.1f}</p>
             </div>
         </div>
         """,
