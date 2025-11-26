@@ -3,6 +3,7 @@ import random
 import base64
 from pathlib import Path
 import pandas as pd
+import time
 from prompts import EXPLANATION_SCORING_PROMPT
 from llm_client import generate_score
 
@@ -43,6 +44,9 @@ if "round" not in st.session_state:
     st.session_state.round = 0
 st.session_state.setdefault("include_audience", True)
 st.session_state.setdefault("total_points", 0)
+st.session_state.setdefault("round_start_time", None)
+st.session_state.setdefault("round_durations", [])  # list of seconds per round - for overall tracking
+st.session_state.setdefault("last_round_time", None)
 
 # --- logo home/reset via query param ---
 page = (
@@ -69,13 +73,16 @@ if page == "home":
 @st.dialog("Round Feedback", width="small", dismissible=False)
 def feedback_popup():
     st.subheader("Score: 100/100")
+    # todo delete after testing
+    if st.session_state.get("last_round_time", None) is not None:
+        st.markdown(f"**Time this round:** {st.session_state.last_round_time:.1f} seconds")
     st.markdown("**Feedback:**")
     st.write(st.session_state.llm_feedback)
     st.markdown("**Improved version:**")
     st.write(st.session_state.improved_version)
 
     if st.button("Next Round"):
-        for key in ("concept", "audience", "explanation", "llm_feedback", "improved_version", "show_feedback"):
+        for key in ("concept", "audience", "explanation", "llm_feedback", "improved_version", "show_feedback", "last_round_time"):
             st.session_state.pop(key, None)
         st.session_state.explanation = ""
         st.session_state.round += 1
@@ -155,10 +162,13 @@ elif st.session_state.mode == "gameplay":
             st.session_state.audience = random.choice(AUDIENCE_LISTS[difficulty])
         else:
             st.session_state.audience = "General audience"
+    
+    # Start timer for this round if not already started and no feedback is being shown
+    if st.session_state.round_start_time is None and not st.session_state.get("show_feedback", False):
+        st.session_state.round_start_time = time.time()
 
     # always define local variable
     audience = st.session_state.audience
-    
     concept = st.session_state.concept
 
     if st.session_state.include_audience:
@@ -209,6 +219,17 @@ elif st.session_state.mode == "gameplay":
             if current_word_count > word_limit:
                 st.error("You exceeded the word limit. Please try again.")
                 st.stop()
+            
+            elapsed = None
+            if st.session_state.round_start_time is not None:
+                elapsed = time.time() - st.session_state.round_start_time
+                st.session_state.round_durations.append(elapsed)
+                # reset so next round can set a new start time
+                st.session_state.round_start_time = None
+
+            # todo delete after testing
+            if elapsed is not None:
+                st.session_state.last_round_time = elapsed
 
             with st.status("Scoring your explanation...", expanded=False) as s:
                 current_points = 100
