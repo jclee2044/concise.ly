@@ -23,6 +23,14 @@ AUDIENCE_LISTS = {
              "business colleague"]
 }
 
+# set page config
+logo_path = Path(__file__).parent / "thumbnail.png"
+st.set_page_config(
+    page_title="Concise.ly",
+    page_icon=str(logo_path),
+    layout="centered",
+)
+
 # load concepts
 concepts = pd.read_csv("concepts_db/concepts.csv")
 
