@@ -97,6 +97,10 @@ def feedback_popup():
         st.markdown(f"**Time Bonus:** {time_bonus_val:+.1f} points ({elapsed_seconds:.1f}s)")
     else:
         st.markdown(f"**Time Penalty:** {time_bonus_val:.1f} points ({elapsed_seconds:.1f}s)")
+
+    word_limit_penalty = st.session_state.get("word_limit_penalty", 0)
+    if st.session_state.get("word_limit_penalty", 0) > 0:
+        st.markdown(f"**Word Limit Penalty:** -{word_limit_penalty:.1f} points")
     
     st.markdown("**Overall Feedback:**")
     feedback_dict = st.session_state.get("feedback_dict", {})
@@ -265,7 +269,7 @@ elif st.session_state.mode == "gameplay":
                 st.stop()
 
             if current_word_count > word_limit:
-                st.error("You exceeded the word limit. Please try again.")
+                st.error("Word limit exceeded (-10 points). Please try again.")
                 st.session_state.word_limit_penalty += 10
                 st.stop()
             
