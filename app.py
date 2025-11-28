@@ -12,7 +12,7 @@ from scoring import compute_content_score, time_bonus, compute_final_score
 
 # WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
 # WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3] # 15 rounds
-WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 4, 3] # 10 rounds
+WORD_COUNTS = [18, 3] # 10 rounds
 
 AUDIENCE_LISTS = {
     "easy": ["5-year-old", "beginner English learner", "friend", "grandma", "general audience"],
@@ -170,6 +170,15 @@ def feedback_popup():
             st.session_state.pop(key, None)
         st.session_state.explanation = ""
         st.session_state.round += 1
+
+        # Check if game is complete
+        if st.session_state.round >= len(WORD_COUNTS):
+            st.session_state.mode = "summary"
+        else:
+            # Reset start_time for the new round
+            st.session_state.start_time = None
+            st.session_state.round_start_time = None
+
         # Reset start_time for the new round
         st.session_state.start_time = None
         st.session_state.round_start_time = None
@@ -406,3 +415,49 @@ elif st.session_state.mode == "gameplay":
         # Display feedback as popup
         if st.session_state.get("show_feedback", False):
             feedback_popup()
+
+# ---------- SUMMARY SCREEN ----------
+elif st.session_state.mode == "summary":
+    st.markdown(
+        f"""
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="?page=home" target="_self" style="text-decoration:none;">
+                <img src="data:image/png;base64,{LOGO_B64}" alt="Concise.ly" style="height: 64px;"/>
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Calculate performance message
+    total_points = st.session_state.total_points
+    number_of_rounds = len(WORD_COUNTS)
+    max_possible = 100 * number_of_rounds
+    
+    if total_points > max_possible * 0.75:
+        performance_msg = "You're a master!"
+    elif total_points > max_possible * 0.5:
+        performance_msg = "Good job!"
+    elif total_points > max_possible * 0.25:
+        performance_msg = "Keep practicing!"
+    else:
+        performance_msg = "Better luck next time!"
+    
+    # Display total score with performance message
+    st.write("<h2>" + performance_msg + "</h2>", unsafe_allow_html=True)
+    st.metric(
+        label="Final Score",
+        value=f"{total_points:.1f} points",
+    )
+    
+    # Placeholder for skill ratings
+    # skill ratings
+    # will use a session_state dictionary round number -> points earned, each skill rating, time elapsed
+    
+    # Return home button
+    if st.button("Return Home", use_container_width=True):
+        st.session_state.clear()
+        st.session_state.mode = "home"
+        st.session_state.round = 0
+        st.session_state.setdefault("include_audience", True)
+        st.rerun() 
