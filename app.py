@@ -158,7 +158,7 @@ def feedback_popup():
     st.markdown("**Improved version:**")
     st.write(st.session_state.get("improved_version", ""))
     
-    if st.button("Next Round"):
+    if st.button("Next Round", use_container_width=True, type="primary"):
         # Clear all scoring-related keys
         keys_to_clear = (
             "concept", "audience", "explanation", "improved_version", 
@@ -220,7 +220,7 @@ We will evaluate your response and give you suggestions.
     
     col1, col2, col3 = st.columns([3,3,2])
     with col3:
-        if st.button("Start game"):
+        if st.button("Start game", use_container_width=True, type="primary"):
             st.session_state.mode = "gameplay"
             st.rerun()
 
@@ -308,7 +308,7 @@ elif st.session_state.mode == "gameplay":
 
     col1, col2, col3 = st.columns([3,4,2])
     with col3:
-        if st.button("Submit"):
+        if st.button("Submit", use_container_width=True, type="primary"):
             if not explanation.strip():
                 st.error("Please enter an explanation.")
                 st.stop()
@@ -434,8 +434,10 @@ elif st.session_state.mode == "summary":
     number_of_rounds = len(WORD_COUNTS)
     max_possible = 100 * number_of_rounds
     
-    if total_points > max_possible * 0.75:
+    if total_points > max_possible * 0.90:
         performance_msg = "You're a master!"
+    elif total_points > max_possible * 0.75:
+        performance_msg = "Nice work!"
     elif total_points > max_possible * 0.5:
         performance_msg = "Good job!"
     elif total_points > max_possible * 0.25:
