@@ -12,7 +12,7 @@ from scoring import compute_content_score, time_bonus, compute_final_score
 
 # WORD_COUNTS = [20, 17, 14, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3]
 # WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4, 3, 3, 3] # 15 rounds
-WORD_COUNTS = [18, 3] # 10 rounds
+WORD_COUNTS = [18, 15, 12, 10, 8, 7, 6, 5, 4, 3] # 10 rounds
 
 AUDIENCE_LISTS = {
     "easy": ["5-year-old", "beginner English learner", "friend", "grandma", "general audience"],
@@ -24,7 +24,7 @@ AUDIENCE_LISTS = {
 }
 
 # set page config
-logo_path = Path(__file__).parent / "thumbnail.png"
+logo_path = Path(__file__).parent / "img/thumbnail.png"
 st.set_page_config(
     page_title="Concise.ly",
     page_icon=str(logo_path),
@@ -35,7 +35,7 @@ st.set_page_config(
 concepts = pd.read_csv("concepts_db/concepts.csv")
 
 # load logo
-logo_path = Path(__file__).parent / "logo.png"
+logo_path = Path(__file__).parent / "img/logo.png"
 LOGO_B64 = ""
 if logo_path.exists():
     LOGO_B64 = base64.b64encode(logo_path.read_bytes()).decode("utf-8")
