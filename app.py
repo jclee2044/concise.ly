@@ -86,22 +86,71 @@ if page == "home":
 @st.dialog("Round Feedback", width="small", dismissible=False)
 def feedback_popup():
     final_score = st.session_state.get("final_score", 0)
-    st.subheader(f"Final Score: {final_score:.1f}/100")
-    
     content_score = st.session_state.get("content_score", 0)
     time_bonus_val = st.session_state.get("time_bonus", 0)
     elapsed_seconds = st.session_state.get("elapsed_seconds", 0)
-    
-    st.markdown(f"**Content Score:** {content_score:.1f}/100")
-    if time_bonus_val > 0:
-        st.markdown(f"**Time Bonus:** {time_bonus_val:+.1f} points ({elapsed_seconds:.1f}s)")
-    else:
-        st.markdown(f"**Time Penalty:** {time_bonus_val:.1f} points ({elapsed_seconds:.1f}s)")
-
     word_limit_penalty = st.session_state.get("word_limit_penalty", 0)
-    if st.session_state.get("word_limit_penalty", 0) > 0:
-        st.markdown(f"**Word Limit Penalty:** -{word_limit_penalty:.1f} points")
     
+    # Determine score color
+    if final_score >= 90:
+        score_color = "normal"  # green in streamlit
+    elif final_score >= 70:
+        score_color = "off"  # gray/neutral
+    else:
+        score_color = "inverse"  # red
+    
+    # Main score display with st.metric
+    st.metric(
+        label="You scored",
+        value=f"{final_score:.1f} points",
+        delta=None,
+        delta_color=score_color
+    )
+    
+    # Context line (subdued, like in the React version)
+    context_parts = [f"Content: {content_score:.1f}"]
+    
+    if time_bonus_val != 0:
+        if time_bonus_val > 0:
+            time_text = f" Time bonus: +{time_bonus_val:.1f} pts"
+        else:
+            time_text = f" Time penalty: -{time_bonus_val:.1f} pts"
+        context_parts.append(time_text)
+    
+    if word_limit_penalty > 0:
+        context_parts.append(f"Words: -{word_limit_penalty:.1f} pts")
+    
+    st.markdown(
+        f"<p style='color: #94a3b8; font-size: 0.9em; margin-top: -10px;'>{' · '.join(context_parts)}</p>",
+        unsafe_allow_html=True
+    )
+    
+    # Score breakdown as expandable section
+    with st.expander("Score Breakdown"):
+        feedback_dict = st.session_state.get("feedback_dict", {})
+        brevity_score = st.session_state.get("brevity_score", 0)
+        accuracy_score = st.session_state.get("accuracy_score", 0)
+        audience_fit_score = st.session_state.get("audience_fit_score", 0)
+        grammar_score = st.session_state.get("grammar_score", 0)
+        
+        st.markdown(f"**Brevity:** {brevity_score}/10 - {feedback_dict.get('brevity', 'N/A')}")
+        st.markdown(f"**Accuracy:** {accuracy_score}/10 - {feedback_dict.get('accuracy', 'N/A')}")
+        label = "Audience Fit" if st.session_state.get("include_audience", True) else "Clarity"
+        st.markdown(f"**{label}:** {audience_fit_score}/10 - {feedback_dict.get('audience_fit', 'N/A')}")
+        st.markdown(f"**Grammar:** {grammar_score}/10 - {feedback_dict.get('grammar', 'N/A')}")
+        
+        # Show time/word details in breakdown if they apply
+        if time_bonus_val != 0 or word_limit_penalty > 0:
+            st.divider()
+        
+        if time_bonus_val != 0:
+            bonus_type = "Bonus" if time_bonus_val > 0 else "Penalty"
+            st.markdown(f"**Time {bonus_type}:** {time_bonus_val:+.1f} pts ({elapsed_seconds:.1f}s)")
+        
+        if word_limit_penalty > 0:
+            st.markdown(f"**Word Limit Penalty:** -{word_limit_penalty:.1f} pts (exceeded word limit)")
+    
+    # Overall feedback
     st.markdown("**Overall Feedback:**")
     feedback_dict = st.session_state.get("feedback_dict", {})
     st.write(feedback_dict.get('overall', 'N/A'))
@@ -109,19 +158,6 @@ def feedback_popup():
     st.markdown("**Improved version:**")
     st.write(st.session_state.get("improved_version", ""))
     
-    # Score breakdown as expandable section
-    with st.expander("Score Breakdown"):
-        brevity_score = st.session_state.get("brevity_score", 0)
-        accuracy_score = st.session_state.get("accuracy_score", 0)
-        audience_fit_score = st.session_state.get("audience_fit_score", 0)
-        grammar_score = st.session_state.get("grammar_score", 0)
-        
-        st.markdown(f"- **Brevity:** {brevity_score}/10 - {feedback_dict.get('brevity', 'N/A')}")
-        st.markdown(f"- **Accuracy:** {accuracy_score}/10 - {feedback_dict.get('accuracy', 'N/A')}")
-        label = "Audience Fit" if st.session_state.get("include_audience", True) else "Clarity"
-        st.markdown(f"- **{label}:** {audience_fit_score}/10 - {feedback_dict.get('audience_fit', 'N/A')}")
-        st.markdown(f"- **Grammar:** {grammar_score}/10 - {feedback_dict.get('grammar', 'N/A')}")
-
     if st.button("Next Round"):
         # Clear all scoring-related keys
         keys_to_clear = (

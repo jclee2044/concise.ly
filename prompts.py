@@ -17,11 +17,11 @@ The JSON must have the following structure:
   "audience_fit_score": <integer 0-10>,
   "grammar_score": <integer 0-10>,
   "feedback": {{
-    "brevity": "<short sentence about brevity>",
-    "accuracy": "<short sentence about accuracy>",
-    "audience_fit": "<short sentence about audience fit>",
-    "grammar": "<short sentence about grammar>",
-    "overall": "<two extremely short sentences of overall feedback>"
+    "brevity": "<5-6 words of feedback about brevity>",
+    "accuracy": "<5-6 words of feedback about accuracy>",
+    "audience_fit": "<5-6 words of feedback about audience fit>",
+    "grammar": "<5-6 words of feedback about grammar>",
+    "overall": "<two short sentences of overall feedback>"
   }},
   "improved_version": "<a more clear, concise, and apt version of the explanation>"
 }}
