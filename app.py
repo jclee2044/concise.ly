@@ -20,7 +20,7 @@ AUDIENCE_LISTS = {
                "friend", "supervisor", "grandma", "business colleague"],
     "hard": ["5-year-old", "high schooler", "college professor", "beginner English learner", 
              "friend", "love interest", "supervisor", "scientist", "investor", "grandma", "poet",
-             "business colleague"]
+             "business colleague", "CEO"]
 }
 
 # set page config
@@ -114,7 +114,7 @@ def feedback_popup():
         if time_bonus_val > 0:
             time_text = f" Time bonus: +{time_bonus_val:.1f} pts"
         else:
-            time_text = f" Time penalty: -{time_bonus_val:.1f} pts"
+            time_text = f" Time penalty: {time_bonus_val:.1f} pts"
         context_parts.append(time_text)
     
     if word_limit_penalty > 0:
@@ -202,19 +202,28 @@ if st.session_state.mode == "home":
     ])
     st.write("<h4>" + tagline + "</h4>", unsafe_allow_html=True)
 
+    st.space(1)
+    
     st.write("""
-**Instructions:** You will be given a concept, an audience, and a word limit. Within these parameters, you must explain or define the concept to match the context. 
-             
-We will evaluate your response and give you suggestions.
+**Instructions:** \n
+You will be given a concept. Your goal is to explain the concept within the word limit. We will evaluate your response and give you feedback. Have fun!
 """)
     
-    difficulty = st.radio("Choose difficulty", ["easy", "medium", "hard"], horizontal=True)
+    st.space(1)
+    
+    difficulty = st.radio(
+        "Choose difficulty",
+        ["easy", "medium", "hard"],
+        index=0, # set default to easy
+        help="Higher difficulty means more abstract concepts and tougher audiences.",
+        horizontal=True)
     st.session_state.difficulty = difficulty
 
     include_audience = st.toggle(
         "Include audience",
         value=st.session_state.include_audience,
-        key="include_audience_toggle"
+        key="include_audience_toggle",
+        help="If enabled, you will be asked to explain the concept to a specific audience.",
     )
     st.session_state.include_audience = include_audience
     
@@ -274,7 +283,10 @@ elif st.session_state.mode == "gameplay":
         st.info("Explain what **" + concept + "** is.")
 
     # explanation
-    explanation = st.text_area("Your explanation", key="explanation")
+    explanation = st.text_area("**Your explanation**",
+                                key="explanation",
+                                placeholder="Type here...",
+                                )
 
     # word count info
     if st.session_state.round > len(WORD_COUNTS) - 1:
