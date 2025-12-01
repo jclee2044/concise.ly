@@ -158,7 +158,10 @@ def feedback_popup():
     st.markdown("**Improved version:**")
     st.write(st.session_state.get("improved_version", ""))
     
-    if st.button("Next Round", use_container_width=True, type="primary"):
+    is_last_round = st.session_state.round >= len(WORD_COUNTS) - 1
+    button_label = "Finish" if is_last_round else "Next Round"
+
+    if st.button(button_label, use_container_width=True, type="primary"):
         # Clear all scoring-related keys
         keys_to_clear = (
             "concept", "audience", "explanation", "improved_version", 
@@ -197,7 +200,7 @@ if st.session_state.mode == "home":
     )
     
     tagline = random.choice([
-        "Avoid the awkwardness.", "Communicate better.", "Say it right.", "No more tip-of-the-tongue.",
+        "Avoid the awkward silences.", "Communicate better.", "Say it right.", "No more tip-of-the-tongue.",
          "Blow them away with how well you speak.", "Make your words count.", "No more confusion."
     ])
     st.write("<h4>" + tagline + "</h4>", unsafe_allow_html=True)

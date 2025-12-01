@@ -38,7 +38,7 @@ Important constraints for improved_version:
 - Your explanation must be appropriate for the audience.
 
 If the user's explanation contains uncertainty, profanity, or expression of not knowing how to explain the concept:
-The feedback.overall should be one sentence, something like "To explain this concept, you could say" followed by your suggestions.
+The feedback.overall should be one sentence, something like "To explain this concept, you could ..." followed by your suggested strategy.
 If the user's explanation is longer than the word limit, focus on how specifically to make it shorter and more accurate.
 
 Return ONLY valid JSON, no markdown formatting, no code blocks, just the raw JSON object.
